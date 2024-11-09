@@ -1,118 +1,75 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+//import liraries
+import React, { useEffect } from 'react';
+import FlashMessage from "react-native-flash-message";
+import { Provider } from 'react-redux';
+import Routes from './src/Navigations/Routes';
+import { changeAppTheme, changeLanguage } from './src/redux/actions/appSettings';
+import { saveUserData } from './src/redux/reducers/auth';
+import store from './src/redux/store';
+import fontFamily from './src/styles/fontFamily';
+import { textScale } from './src/styles/responsiveSize';
+import { getData } from './src/utils/helperFunctions';
+import {requestUserPermission } from './src/utils/notificationService';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+const {dispatch} = store
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+const App = () => {
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+  useEffect(() => {
+    initiateLang()
+    initiateTheme()
+    initUser()
+  }, [])
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+  useEffect(()=>{
+    requestUserPermission()
+  },[])
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  const initUser = async() =>{
+    try {
+      let data = await getData('userData')
+      if (!!data) {
+        dispatch(saveUserData(JSON.parse(data)));
+      }
+    } catch (error) {
+      console.log("no data found")
+    }
+  }
+  const initiateTheme = async () => {
+    try {
+      let myTheme = await getData('theme')
+      if (!!myTheme) {
+        changeAppTheme(myTheme)
+      }
+    } catch (error) {
+      console.log("no data found")
+    }
+  }
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+
+  const initiateLang = async () => {
+    try {
+      let myLang = await getData('language')
+      if (!!myLang) {
+        changeLanguage(myLang)
+      }
+    } catch (error) {
+      console.log("no data found")
+    }
+  }
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
+    <Provider store={store}>
+      <Routes />
+      <FlashMessage
+        position={'top'}
+        titleStyle={{
+          fontFamily:fontFamily.medium,
+          fontSize: textScale(14)
+        }}
       />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    </Provider>
   );
-}
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
+};
 
 export default App;
